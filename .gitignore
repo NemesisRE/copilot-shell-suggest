@@ -1,0 +1,12 @@
+# OS and editor files
+.DS_Store
+.vscode/
+
+# PowerShell and test output
+TestResults/
+*.log
+
+# Local dependency and build artifacts
+.cache/
+dist/
+coverage/

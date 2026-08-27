@@ -1,0 +1,52 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  zsh:
+    name: zsh tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install zsh
+        run: sudo apt-get update && sudo apt-get install --yes zsh
+      - name: Syntax check
+        run: zsh -f -n copilot-shell-suggest.plugin.zsh
+      - name: Run tests
+        run: zsh -f tests/copilot-shell-suggest.plugin.zsh
+
+  powershell:
+    name: PowerShell tests
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show PowerShell version
+        shell: pwsh
+        run: '$PSVersionTable.PSVersion'
+      - name: Install test dependencies
+        shell: pwsh
+        run: Install-Module Pester -MinimumVersion 5.5.0 -Force -Scope CurrentUser
+      - name: Run Pester
+        shell: pwsh
+        run: Invoke-Pester ./tests/CopilotShellSuggest.Tests.ps1 -CI
+
+  lint:
+    name: static checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install --yes shellcheck
+      - name: Check zsh syntax
+        run: zsh -f -n copilot-shell-suggest.plugin.zsh
+      - name: Install PSScriptAnalyzer
+        shell: pwsh
+        run: Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+      - name: Run PowerShell analyzer
+        shell: pwsh
+        run: Invoke-ScriptAnalyzer -Path ./CopilotShellSuggest.psm1 -Settings ./PSScriptAnalyzerSettings.psd1 -EnableExit
