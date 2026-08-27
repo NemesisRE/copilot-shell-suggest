@@ -21,9 +21,9 @@ function ConvertFrom-CopilotSuggestOutput {
 
 function Invoke-CopilotSuggestCli {
     param([string]$Request)
-    $arguments = @('--deny-tool', $env:COPILOT_SUGGEST_DENY_TOOL, '--no-ask-user', '-s')
+    $arguments = @('--deny-tool', $env:COPILOT_SUGGEST_DENY_TOOL, '--no-ask-user', '--allow-all-tools', '-s')
     if ($env:COPILOT_SUGGEST_MODEL) { $arguments += @('--model', $env:COPILOT_SUGGEST_MODEL) }
-    $arguments += (Get-CopilotSuggestPrompt $Request)
+    $arguments += @('-p', (Get-CopilotSuggestPrompt $Request))
     try {
         $global:LASTEXITCODE = 0
         $output = & copilot @arguments 2>&1 | Out-String
@@ -53,9 +53,9 @@ function Select-CopilotSuggestion {
     if (Get-Command fzf -ErrorAction SilentlyContinue) {
         return ($Suggestions | & fzf --preview 'Write-Output {}' --height=40% --layout=reverse)
     }
-    Write-Host 'Mehrere Vorschläge; fzf fehlt.'
+    Write-Host 'Multiple suggestions; fzf missing.'
     for ($index = 0; $index -lt $Suggestions.Count; $index++) { Write-Host ("{0}: {1}" -f ($index + 1), $Suggestions[$index]) }
-    $choice = Read-Host 'Nummer wählen (Abbruch mit Enter)'
+    $choice = Read-Host 'Choose a number (cancel with Enter)'
     if ($choice -match '^[1-9]\d*$' -and [int]$choice -le $Suggestions.Count) { $Suggestions[[int]$choice - 1] }
 }
 
@@ -64,11 +64,11 @@ function Invoke-CopilotSuggestWidget {
     [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
     $prefix = if ($env:COPILOT_SUGGEST_PREFIX) { $env:COPILOT_SUGGEST_PREFIX } else { '#' }
     if (-not $line.StartsWith($prefix)) { Invoke-CopilotSuggestFallback; return }
-    if (-not (Get-Command copilot -ErrorAction SilentlyContinue)) { Write-Host 'copilot nicht im PATH gefunden'; return }
+    if (-not (Get-Command copilot -ErrorAction SilentlyContinue)) { Write-Host 'copilot not found in PATH'; return }
 
     $originalLine = $line
     [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine()
-    [Microsoft.PowerShell.PSConsoleReadLine]::Insert('Copilot denkt nach...')
+    [Microsoft.PowerShell.PSConsoleReadLine]::Insert('Copilot is thinking...')
     $job = Start-CopilotSuggestJob ($line.Substring($prefix.Length))
     $timeout = if ($env:COPILOT_SUGGEST_TIMEOUT) { [int]$env:COPILOT_SUGGEST_TIMEOUT } else { 15 }
     $deadline = [datetime]::UtcNow.AddSeconds($timeout)
@@ -78,14 +78,14 @@ function Invoke-CopilotSuggestWidget {
     if ($job.State -in @('NotStarted', 'Running')) {
         Stop-Job $job -ErrorAction SilentlyContinue; Remove-Job $job -Force -ErrorAction SilentlyContinue
         [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine(); [Microsoft.PowerShell.PSConsoleReadLine]::Insert($originalLine)
-        Write-Host "Copilot timeout nach ${timeout}s"; return
+        Write-Host "Copilot timed out after ${timeout}s"; return
     }
     $result = Receive-Job $job -ErrorAction SilentlyContinue | Select-Object -Last 1
     Remove-Job $job -Force -ErrorAction SilentlyContinue
     [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine(); [Microsoft.PowerShell.PSConsoleReadLine]::Insert($originalLine)
-    if (-not $result -or $result.ExitCode -ne 0) { Write-Host "Copilot-Fehler (Anmeldung mit 'copilot' prüfen)"; return }
+    if (-not $result -or $result.ExitCode -ne 0) { Write-Host "Copilot error (check 'copilot' login)"; return }
     $suggestions = @(ConvertFrom-CopilotSuggestOutput $result.Output)
-    if ($suggestions.Count -eq 0) { Write-Host 'Keine Vorschläge erhalten'; return }
+    if ($suggestions.Count -eq 0) { Write-Host 'No suggestions received'; return }
     $selected = if ($suggestions.Count -eq 1) { $suggestions[0] } else { Select-CopilotSuggestion $suggestions }
     if ($selected) { [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine(); [Microsoft.PowerShell.PSConsoleReadLine]::Insert($selected) }
 }

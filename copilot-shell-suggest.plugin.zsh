@@ -43,16 +43,16 @@ _copilot_suggest_finish() {
   local output=$1 exit_code=$2
   local suggestions=("${(@f)$(_copilot_suggest_parse <<< "$output")}")
   if (( exit_code == 124 )); then
-    zle -M "Copilot timeout nach ${COPILOT_SUGGEST_TIMEOUT}s"
+    zle -M "Copilot timed out after ${COPILOT_SUGGEST_TIMEOUT}s"
   elif (( exit_code != 0 )); then
-    zle -M "Copilot-Fehler (Anmeldung mit 'copilot' prüfen)"
+    zle -M "Copilot error (check 'copilot' login)"
   elif (( ${#suggestions} == 0 )); then
-    zle -M 'Keine Vorschläge erhalten'
+    zle -M 'No suggestions received'
   elif (( ${#suggestions} == 1 )); then
     BUFFER=$suggestions[1]; CURSOR=${#BUFFER}
   elif ! (( $+commands[fzf] )); then
     BUFFER=$suggestions[1]; CURSOR=${#BUFFER}
-    zle -M 'Mehrere Vorschläge: fzf nicht installiert, erster eingesetzt'
+    zle -M 'Multiple suggestions: fzf not installed, using the first one'
   else
     local picker=fzf selected
     [[ -n $TMUX && $+commands[fzf-tmux] ]] && picker=fzf-tmux
@@ -89,18 +89,18 @@ copilot-suggest-widget() {
     return
   fi
   if ! (( $+commands[copilot] )); then
-    zle -M "copilot nicht im PATH gefunden"
+    zle -M "copilot not found in PATH"
     return
   fi
   if (( _COPILOT_SUGGEST_FD >= 0 )); then
-    zle -M 'Copilot-Vorschlag läuft bereits'
+    zle -M 'A Copilot suggestion is already running'
     return
   fi
   _COPILOT_SUGGEST_ORIGINAL_BUFFER=$BUFFER
   local request=${BUFFER#"$COPILOT_SUGGEST_PREFIX"}
   exec {_COPILOT_SUGGEST_FD}< <(_copilot_suggest_start "$request")
   zle -F "$_COPILOT_SUGGEST_FD" _copilot_suggest_callback
-  zle -R 'Copilot denkt nach...'
+  zle -R 'Copilot is thinking...'
 }
 
 zle -N copilot-suggest-widget

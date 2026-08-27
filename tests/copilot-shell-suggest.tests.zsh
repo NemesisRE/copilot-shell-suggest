@@ -12,14 +12,14 @@ test_non_comment_falls_back() { BUFFER='ls'; zle() { [[ $1 == .expand-or-complet
 test_empty_parse() { [[ -z "$(printf '```\n```\n' | _copilot_suggest_parse)" ]]; }
 test_single_suggestion_replaces_buffer() {
 	BUFFER='# describe'; _COPILOT_SUGGEST_ORIGINAL_BUFFER=$BUFFER
-	zle() { [[ $1 == -M ]] && [[ $2 == 'Keine Vorschläge erhalten' ]]; }
+	zle() { [[ $1 == -M ]] && [[ $2 == 'No suggestions received' ]]; }
 	_copilot_suggest_finish 'echo ready' 0
 	assertEquals 'echo ready' "$BUFFER"
 }
 test_missing_copilot_preserves_buffer() {
 	local old_path=$PATH
 	PATH=/usr/bin:/bin; BUFFER='# describe'
-	zle() { [[ $1 == -M ]] && [[ $2 == 'copilot nicht im PATH gefunden' ]]; }
+	zle() { [[ $1 == -M ]] && [[ $2 == 'copilot not found in PATH' ]]; }
 	copilot-suggest-widget
 	PATH=$old_path
 	assertEquals '# describe' "$BUFFER"
