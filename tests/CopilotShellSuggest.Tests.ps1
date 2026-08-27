@@ -1,4 +1,8 @@
-BeforeAll { Import-Module "$PSScriptRoot/../CopilotShellSuggest.psm1" -Force }
+BeforeAll {
+    Import-Module "$PSScriptRoot/../CopilotShellSuggest.psm1" -Force
+    # Pester requires the mocked command to already exist; the real CLI isn't on the test runner's PATH.
+    function global:copilot { }
+}
 
 Describe 'CopilotSuggest parser' {
     It 'removes markdown fences and prompts' {

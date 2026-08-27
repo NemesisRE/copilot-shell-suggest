@@ -11,12 +11,12 @@ function Get-CopilotSuggestPrompt {
 function ConvertFrom-CopilotSuggestOutput {
     param([AllowEmptyString()][string]$Output)
     @($Output -split "`n" | ForEach-Object {
-        $line = $_.TrimEnd("`r")
-        if ($line -and $line -notmatch '^```') {
-            if ($line -match '^\$\s+') { $line = $line -replace '^\$\s+', '' }
-            if ($line -ne '$' -and $line.Trim()) { $line }
-        }
-    })
+            $line = $_.TrimEnd("`r")
+            if ($line -and $line -notmatch '^```') {
+                if ($line -match '^\$\s+') { $line = $line -replace '^\$\s+', '' }
+                if ($line -ne '$' -and $line.Trim()) { $line }
+            }
+        })
 }
 
 function Invoke-CopilotSuggestCli {
@@ -25,6 +25,7 @@ function Invoke-CopilotSuggestCli {
     if ($env:COPILOT_SUGGEST_MODEL) { $arguments += @('--model', $env:COPILOT_SUGGEST_MODEL) }
     $arguments += (Get-CopilotSuggestPrompt $Request)
     try {
+        $global:LASTEXITCODE = 0
         $output = & copilot @arguments 2>&1 | Out-String
         [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = $output }
     } catch {
@@ -65,7 +66,7 @@ function Invoke-CopilotSuggestWidget {
     if (-not $line.StartsWith($prefix)) { Invoke-CopilotSuggestFallback; return }
     if (-not (Get-Command copilot -ErrorAction SilentlyContinue)) { Write-Host 'copilot nicht im PATH gefunden'; return }
 
-    $originalLine = $line; $originalCursor = $cursor
+    $originalLine = $line
     [Microsoft.PowerShell.PSConsoleReadLine]::RevertLine()
     [Microsoft.PowerShell.PSConsoleReadLine]::Insert('Copilot denkt nach...')
     $job = Start-CopilotSuggestJob ($line.Substring($prefix.Length))
