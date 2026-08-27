@@ -29,4 +29,6 @@ test_non_comment_falls_back || exit 1
 test_empty_parse || exit 1
 test_single_suggestion_replaces_buffer || exit 1
 test_missing_copilot_preserves_buffer || exit 1
+# tests above stub out the zle builtin; drop the stub so it can't leak if this file is ever sourced
+unfunction zle 2>/dev/null
 print 'zsh tests passed (mock parser/fallback; integration uses PATH stubs)'

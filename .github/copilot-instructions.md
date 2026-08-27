@@ -5,5 +5,6 @@
 - Preserve the normal completion handler for non-trigger lines.
 - Do not persist prompts, Copilot responses, or credentials.
 - Add or update mock-based tests for behavior changes. Tests must never invoke the real `copilot` CLI.
-- Run `zsh -f -n copilot-shell-suggest.plugin.zsh` and `zsh -f tests/copilot-shell-suggest.plugin.zsh` locally. Run Pester and PSScriptAnalyzer when PowerShell is available.
+- Run `zsh -f -n copilot-shell-suggest.plugin.zsh` and `zsh -f tests/copilot-shell-suggest.tests.zsh` locally. Run Pester and PSScriptAnalyzer when PowerShell is available.
+- Keep the zsh test file's basename different from `copilot-shell-suggest.plugin.zsh` so plugin managers (e.g. sheldon) that glob-match the plugin filename recursively do not also source the test suite.
 - Keep the project licensed under GPL-3.0-only and avoid adding unrelated generated files.

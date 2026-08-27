@@ -37,7 +37,6 @@ Sheldon (`~/.config/sheldon/plugins.toml`):
 ```toml
 [plugins.copilot-shell-suggest]
 github = "NemesisRE/copilot-shell-suggest"
-dir = "copilot-shell-suggest"
 apply = ["source"]
 ```
 
@@ -78,10 +77,10 @@ Requests may count against the user's Copilot quota. Limits depend on the plan, 
 
 ## Tests
 
-The zsh tests intentionally use a small shunit2-compatible pattern without network access; `tests/copilot-shell-suggest.plugin.zsh` can be run directly or integrated with zunit. Pester is the standard PowerShell test framework:
+The zsh tests intentionally use a small shunit2-compatible pattern without network access; `tests/copilot-shell-suggest.tests.zsh` can be run directly or integrated with zunit. Pester is the standard PowerShell test framework:
 
 ```zsh
-zsh tests/copilot-shell-suggest.plugin.zsh
+zsh tests/copilot-shell-suggest.tests.zsh
 ```
 
 ```powershell

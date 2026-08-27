@@ -18,7 +18,7 @@ jobs:
       - name: Syntax check
         run: zsh -f -n copilot-shell-suggest.plugin.zsh
       - name: Run tests
-        run: zsh -f tests/copilot-shell-suggest.plugin.zsh
+        run: zsh -f tests/copilot-shell-suggest.tests.zsh
 
   powershell:
     name: PowerShell tests
