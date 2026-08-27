@@ -3,6 +3,7 @@
 .vscode/
 
 # PowerShell and test output
+testResults.xml
 TestResults/
 *.log
 
