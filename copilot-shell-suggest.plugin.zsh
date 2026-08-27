@@ -1,5 +1,7 @@
 # GitHub Copilot command suggestions for zsh ZLE.
 
+zmodload -F zsh/system b:sysread
+
 typeset -g COPILOT_SUGGEST_PREFIX=${COPILOT_SUGGEST_PREFIX:-#}
 typeset -g COPILOT_SUGGEST_KEY=${COPILOT_SUGGEST_KEY:-'^I'}
 typeset -g COPILOT_SUGGEST_TIMEOUT=${COPILOT_SUGGEST_TIMEOUT:-15}
@@ -7,6 +9,7 @@ typeset -g COPILOT_SUGGEST_MODEL=${COPILOT_SUGGEST_MODEL:-}
 typeset -g COPILOT_SUGGEST_DENY_TOOL=${COPILOT_SUGGEST_DENY_TOOL:-shell}
 typeset -g _COPILOT_SUGGEST_FD=-1
 typeset -g _COPILOT_SUGGEST_ORIGINAL_BUFFER=''
+typeset -g _COPILOT_SUGGEST_OUTPUT=''
 
 _copilot_suggest_prompt() {
   print -r -- "Return only shell commands, one command per line. Do not explain anything. Do not use Markdown or code fences. Never execute a command. User request: $1"
@@ -66,21 +69,31 @@ _copilot_suggest_finish() {
 }
 
 _copilot_suggest_callback() {
-  local fd=$1 line output='' exit_code=''
-  while IFS= read -r -u "$fd" line; do
-    if [[ $line == __COPILOT_SUGGEST_STATUS__:* ]]; then
-      exit_code=${line##*:}
-    else
-      output+="$line"$'\n'
-    fi
+  local fd=$1 event=$2 chunk status_code
+  # poll only what is ready; a blocking read here would freeze the whole shell
+  while true; do
+    sysread -i "$fd" -t 0 chunk 2>/dev/null
+    status_code=$?
+    (( status_code == 0 )) || break
+    _COPILOT_SUGGEST_OUTPUT+=$chunk
   done
-  if [[ -n $exit_code ]]; then
-    zle -F "$fd"
-    exec {fd}<&-
-    _COPILOT_SUGGEST_FD=-1
-    _copilot_suggest_finish "$output" "$exit_code"
-    zle -R
+  # 5 is EOF; anything else non-zero besides 4 (no data yet) is a broken pipe
+  if (( status_code == 4 )) && [[ -z $event ]]; then
+    return
   fi
+  zle -F "$fd"
+  exec {fd}<&-
+  _COPILOT_SUGGEST_FD=-1
+  local raw=$_COPILOT_SUGGEST_OUTPUT exit_code=1 output
+  if [[ $raw == *__COPILOT_SUGGEST_STATUS__:* ]]; then
+    exit_code=${${raw##*__COPILOT_SUGGEST_STATUS__:}%%$'\n'*}
+    output=${raw%%__COPILOT_SUGGEST_STATUS__:*}
+  else
+    output=$raw
+  fi
+  _COPILOT_SUGGEST_OUTPUT=''
+  _copilot_suggest_finish "$output" "$exit_code"
+  zle -R
 }
 
 copilot-suggest-widget() {
@@ -97,10 +110,11 @@ copilot-suggest-widget() {
     return
   fi
   _COPILOT_SUGGEST_ORIGINAL_BUFFER=$BUFFER
+  _COPILOT_SUGGEST_OUTPUT=''
   local request=${BUFFER#"$COPILOT_SUGGEST_PREFIX"}
   exec {_COPILOT_SUGGEST_FD}< <(_copilot_suggest_start "$request")
   zle -F "$_COPILOT_SUGGEST_FD" _copilot_suggest_callback
-  zle -R 'Copilot is thinking...'
+  zle -M 'Copilot is thinking...'
 }
 
 zle -N copilot-suggest-widget
