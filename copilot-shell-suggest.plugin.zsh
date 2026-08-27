@@ -28,7 +28,7 @@ _copilot_suggest_start() {
   local model_args=()
   [[ -n $COPILOT_SUGGEST_MODEL ]] && model_args=(--model "$COPILOT_SUGGEST_MODEL")
   {
-    copilot --deny-tool "$COPILOT_SUGGEST_DENY_TOOL" --no-ask-user -s "${model_args[@]}" "$(_copilot_suggest_prompt "$prompt")" &
+    copilot --deny-tool "$COPILOT_SUGGEST_DENY_TOOL" --no-ask-user --allow-all-tools -s "${model_args[@]}" -p "$(_copilot_suggest_prompt "$prompt")" &
     local copilot_pid=$!
     ( sleep "$timeout"; kill -0 "$copilot_pid" 2>/dev/null && kill "$copilot_pid" 2>/dev/null ) &
     local watchdog_pid=$!
