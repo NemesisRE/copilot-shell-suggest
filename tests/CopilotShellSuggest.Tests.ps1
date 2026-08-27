@@ -2,7 +2,13 @@ BeforeAll { Import-Module "$PSScriptRoot/../CopilotShellSuggest.psm1" -Force }
 
 Describe 'CopilotSuggest parser' {
     It 'removes markdown fences and prompts' {
-        @(ConvertFrom-CopilotSuggestOutput "```sh`necho hi`n`$ ls`n```") | Should -Be @('echo hi', 'ls')
+        $fenced = @'
+```sh
+echo hi
+$ ls
+```
+'@
+        @(ConvertFrom-CopilotSuggestOutput $fenced) | Should -Be @('echo hi', 'ls')
     }
     It 'returns no entries for empty output' {
         @(ConvertFrom-CopilotSuggestOutput '') | Should -BeNullOrEmpty

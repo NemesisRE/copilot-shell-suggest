@@ -12,7 +12,7 @@ jobs:
     name: zsh tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install zsh
         run: sudo apt-get update && sudo apt-get install --yes zsh
       - name: Syntax check
@@ -24,7 +24,7 @@ jobs:
     name: PowerShell tests
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Show PowerShell version
         shell: pwsh
         run: '$PSVersionTable.PSVersion'
@@ -39,9 +39,9 @@ jobs:
     name: static checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install shellcheck
-        run: sudo apt-get update && sudo apt-get install --yes shellcheck
+      - uses: actions/checkout@v7
+      - name: Install shellcheck and zsh
+        run: sudo apt-get update && sudo apt-get install --yes shellcheck zsh
       - name: Check zsh syntax
         run: zsh -f -n copilot-shell-suggest.plugin.zsh
       - name: Install PSScriptAnalyzer
